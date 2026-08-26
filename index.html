@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026년 그룹 통합 실적 대시보드</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --ring: rgba(11,11,11,0.10);
+    --blue: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --ring: rgba(255,255,255,0.10); --blue: #3987e5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --ring: rgba(255,255,255,0.10); --blue: #3987e5;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
+  }
+  a { color: var(--blue); }
+  a:hover { color: #184f95; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--grid);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 28px;
+    overflow-x: auto;
+  }
+  .topbar-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    padding: 16px 20px 16px 0;
+    border-right: 1px solid var(--grid);
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+  .tab-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--ink2);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 16px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    font-family: inherit;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  .view { display: none; padding: 40px; max-width: 1240px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  .eyebrow { font-size: 13px; font-weight: 600; color: var(--blue); letter-spacing: 0.02em; margin: 0 0 8px; }
+  .title { font-size: 32px; font-weight: 700; margin: 0 0 6px; }
+  .subtitle { font-size: 14.5px; color: var(--muted); margin: 0; }
+
+  .unit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .unit-card { background: var(--surface); border-radius: 14px; padding: 26px 28px; box-shadow: 0 1px 2px var(--ring); }
+  .unit-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .unit-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(42,120,214,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .unit-name { font-size: 17px; font-weight: 700; }
+  .unit-stats { display: flex; gap: 28px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-value { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .stat-label { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .unit-insight { font-size: 13.5px; color: var(--ink2); line-height: 1.55; border-top: 1px solid var(--grid); padding-top: 14px; }
+
+  .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .kpi-tile { background: var(--surface); border-radius: 12px; padding: 18px 22px; box-shadow: 0 1px 2px var(--ring); flex: 1; min-width: 168px; }
+  .kpi-label { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 700; }
+
+  .section { margin-top: 34px; }
+  .section-title { font-size: 17px; font-weight: 700; margin: 0 0 3px; }
+  .section-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 16px; }
+  .card { background: var(--surface); border-radius: 12px; padding: 22px 24px; box-shadow: 0 1px 2px var(--ring); }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+
+  .comment-card { background: var(--surface); border-radius: 14px; padding: 26px 28px; box-shadow: 0 1px 2px var(--ring); }
+  .insight-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .insight-item { display: flex; gap: 11px; align-items: flex-start; font-size: 14px; color: var(--ink2); line-height: 1.6; }
+  .insight-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); margin-top: 7px; flex-shrink: 0; }
+  .footer-note { font-size: 12px; color: var(--muted); margin-top: 28px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 0 10px 10px; border-bottom: 1px solid var(--grid); }
+  td { padding: 10px; border-bottom: 1px solid var(--grid); color: var(--ink2); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+  tr:last-child td { border-bottom: none; }
+
+  @media (max-width: 860px) {
+    .unit-grid, .grid-2 { grid-template-columns: 1fr; }
+    .view { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar" id="topbar">
+  <div class="topbar-title">2026 그룹 실적</div>
+  <button class="tab-btn active" data-view="overview">통합 개요</button>
+  <button class="tab-btn" data-view="terminal">광양터미널</button>
+  <button class="tab-btn" data-view="powerplant">발전소별</button>
+  <button class="tab-btn" data-view="trading">트레이딩</button>
+  <button class="tab-btn" data-view="subsidiaries">해외법인</button>
+</nav>
+
+<!-- ============ 통합 개요 ============ -->
+<section class="view active" id="view-overview">
+  <div class="eyebrow">GROUP OVERVIEW · 2026</div>
+  <h1 class="title">2026년 그룹 통합 실적 대시보드</h1>
+  <p class="subtitle">광양터미널 · 발전소 · 글로벌 트레이딩 · 해외법인 — 2026년 1~12월 누계 기준</p>
+
+  <div style="height: 32px;"></div>
+
+  <div class="unit-grid">
+    <div class="unit-card">
+      <div class="unit-head">
+        <div class="unit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a78d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M4 12h16"/></svg></div>
+        <div class="unit-name">광양터미널 운영</div>
+      </div>
+      <div class="unit-stats">
+        <div><div class="stat-value">89.1%</div><div class="stat-label">평균 가동률</div></div>
+        <div><div class="stat-value">449,737톤</div><div class="stat-label">연간 반출입</div></div>
+      </div>
+      <div class="unit-insight">반출입 물량이 1월 13,101톤에서 12월 56,013톤으로 연중 4.3배 증가 — 4개 구역 중 가장 가파른 성장 지표</div>
+    </div>
+
+    <div class="unit-card">
+      <div class="unit-head">
+        <div class="unit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a78d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></div>
+        <div class="unit-name">발전소별 운영</div>
+      </div>
+      <div class="unit-stats">
+        <div><div class="stat-value">10,616MW</div><div class="stat-label">총 설비용량 (32기)</div></div>
+        <div><div class="stat-value">69.3TWh</div><div class="stat-label">연간 발전량</div></div>
+      </div>
+      <div class="unit-insight">LNG가 발전량의 80%를 차지, 8월엔 가동률이 102.7%로 100%를 넘는 초과가동 구간에 진입</div>
+    </div>
+
+    <div class="unit-card">
+      <div class="unit-head">
+        <div class="unit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a78d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg></div>
+        <div class="unit-name">글로벌 트레이딩</div>
+      </div>
+      <div class="unit-stats">
+        <div><div class="stat-value">$3.40B</div><div class="stat-label">총 거래액 (200건)</div></div>
+        <div><div class="stat-value">5.51%</div><div class="stat-label">평균 이익률</div></div>
+      </div>
+      <div class="unit-insight">에너지 부문이 거래건수는 25%에 불과하지만 거래액은 68.9%를 차지 — 이익률은 2.1%로 5개 부문 중 가장 낮음</div>
+    </div>
+
+    <div class="unit-card">
+      <div class="unit-head">
+        <div class="unit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a78d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z"/></svg></div>
+        <div class="unit-name">해외법인 실적</div>
+      </div>
+      <div class="unit-stats">
+        <div><div class="stat-value">18.19조원</div><div class="stat-label">연매출 (120개 법인)</div></div>
+        <div><div class="stat-value">5.13%</div><div class="stat-label">영업이익률</div></div>
+      </div>
+      <div class="unit-insight">아시아 권역이 법인 43개·매출 7.14조원으로 전체의 39%를 차지하는 최대 비중 권역</div>
+    </div>
+  </div>
+
+  <div style="height: 36px;"></div>
+
+  <div class="section-title">종합 코멘트</div>
+  <div class="comment-card">
+    <ul class="insight-list">
+      <li class="insight-item"><span class="insight-dot"></span>사업 규모 면에서는 해외법인 연매출 18.19조원과 트레이딩 총거래액 $3.40B가 가장 두드러진다.</li>
+      <li class="insight-item"><span class="insight-dot"></span>발전 부문은 냉방 수요가 몰리는 8월에 LNG 가동률이 102.7%로 100%를 넘는 초과가동 구간에 진입한다 — 피크 대응이 관리 포인트다.</li>
+      <li class="insight-item"><span class="insight-dot"></span>터미널 반출입 물량은 1월 대비 12월 4.3배로 4개 사업 지표 중 가장 뚜렷한 증가 추세를 보인다.</li>
+      <li class="insight-item"><span class="insight-dot"></span>수익성은 트레이딩 모빌리티(10.9%)와 해외법인 아프리카·대양주(6.4%·6.3%)가 가장 높고, 트레이딩 에너지(2.1%)가 가장 낮다 — 거래 규모와 수익성이 항상 비례하지는 않는다.</li>
+    </ul>
+  </div>
+
+  <div class="footer-note">각 사업의 상세 지표는 상단 탭에서 확인. 2026년 1~12월 데이터 기준.</div>
+</section>
+
+<!-- ============ 광양터미널 ============ -->
+<section class="view" id="view-terminal">
+  <div class="eyebrow">GWANGYANG TERMINAL · 2026</div>
+  <h1 class="title">광양터미널 월간운영 대시보드</h1>
+  <p class="subtitle">2026년 1~12월, 4개 구역(1~4구역) · 구역별 6개 탱크 기준</p>
+
+  <div style="height: 26px;"></div>
+
+  <div class="kpi-row">
+    <div class="kpi-tile"><div class="kpi-label">평균 가동률</div><div class="kpi-value">89.1%</div></div>
+    <div class="kpi-tile"><div class="kpi-label">저장량 합계</div><div class="kpi-value">20,543천톤</div></div>
+    <div class="kpi-tile"><div class="kpi-label">송출량 합계</div><div class="kpi-value">14,636천톤</div></div>
+    <div class="kpi-tile"><div class="kpi-label">벙커링 합계</div><div class="kpi-value">109,343톤</div></div>
+    <div class="kpi-tile"><div class="kpi-label">반출입 합계</div><div class="kpi-value">449,737톤</div></div>
+  </div>
+
+  <div class="section">
+    <div class="grid-2">
+      <div>
+        <div class="section-title">구역별 평균 가동률</div>
+        <div class="section-sub">4개 구역 비교, %</div>
+        <div class="card">
+<svg viewBox="0 0 620 144" width="100%" height="144" role="img" aria-label="구역별 평균 가동률">
+<text x="120" y="15.0" text-anchor="end" font-size="13" fill="#52514e">광양 4구역</text>
+<rect x="132" y="0" width="365.4" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="507.4" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">91.8%</text>
+<text x="120" y="53.0" text-anchor="end" font-size="13" fill="#52514e">광양 1구역</text>
+<rect x="132" y="38" width="356.2" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="498.2" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">89.5%</text>
+<text x="120" y="91.0" text-anchor="end" font-size="13" fill="#52514e">광양 2구역</text>
+<rect x="132" y="76" width="350.6" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="492.6" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">88.1%</text>
+<text x="120" y="129.0" text-anchor="end" font-size="13" fill="#52514e">광양 3구역</text>
+<rect x="132" y="114" width="346.3" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="488.3" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">87.0%</text>
+</svg>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">구역별 반출입 합계</div>
+        <div class="section-sub">4개 구역 비교, 톤</div>
+        <div class="card">
+<svg viewBox="0 0 620 144" width="100%" height="144" role="img" aria-label="구역별 반출입 합계">
+<text x="120" y="15.0" text-anchor="end" font-size="13" fill="#52514e">광양 3구역</text>
+<rect x="132" y="0" width="398.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="540.0" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">125,454톤</text>
+<text x="120" y="53.0" text-anchor="end" font-size="13" fill="#52514e">광양 1구역</text>
+<rect x="132" y="38" width="370.8" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="512.8" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">116,875톤</text>
+<text x="120" y="91.0" text-anchor="end" font-size="13" fill="#52514e">광양 2구역</text>
+<rect x="132" y="76" width="341.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="483.0" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">107,500톤</text>
+<text x="120" y="129.0" text-anchor="end" font-size="13" fill="#52514e">광양 4구역</text>
+<rect x="132" y="114" width="317.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="459.0" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">99,908톤</text>
+</svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">월별 반출입 물량 추이</div>
+    <div class="section-sub">4개 구역 합산, 톤</div>
+    <div class="card">
+<svg viewBox="0 0 900 230" width="100%" height="230" role="img" aria-label="월별 반출입 물량 추이">
+<line x1="56" y1="198.0" x2="876" y2="198.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="202.0" text-anchor="end" font-size="11" fill="#898781">8K</text>
+<line x1="56" y1="153.5" x2="876" y2="153.5" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="157.5" text-anchor="end" font-size="11" fill="#898781">21K</text>
+<line x1="56" y1="109.0" x2="876" y2="109.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="113.0" text-anchor="end" font-size="11" fill="#898781">35K</text>
+<line x1="56" y1="64.5" x2="876" y2="64.5" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="68.5" text-anchor="end" font-size="11" fill="#898781">48K</text>
+<line x1="56" y1="20.0" x2="876" y2="20.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="24.0" text-anchor="end" font-size="11" fill="#898781">61K</text>
+<path d="M 56.0,198 L 56.0,180.8 L 130.5,170.0 L 205.1,146.6 L 279.6,127.7 L 354.2,109.2 L 428.7,102.9 L 503.3,83.8 L 577.8,77.6 L 652.4,57.0 L 726.9,45.2 L 801.5,52.8 L 876.0,37.2 L 876.0,198 Z" fill="#2a78d6" opacity="0.10" />
+<path d="M 56.0,180.8 L 130.5,170.0 L 205.1,146.6 L 279.6,127.7 L 354.2,109.2 L 428.7,102.9 L 503.3,83.8 L 577.8,77.6 L 652.4,57.0 L 726.9,45.2 L 801.5,52.8 L 876.0,37.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<text x="56.0" y="222" text-anchor="middle" font-size="10.5" fill="#898781">01월</text>
+<text x="130.5" y="222" text-anchor="middle" font-size="10.5" fill="#898781">02월</text>
+<text x="279.6" y="222" text-anchor="middle" font-size="10.5" fill="#898781">04월</text>
+<text x="428.7" y="222" text-anchor="middle" font-size="10.5" fill="#898781">06월</text>
+<text x="577.8" y="222" text-anchor="middle" font-size="10.5" fill="#898781">08월</text>
+<text x="726.9" y="222" text-anchor="middle" font-size="10.5" fill="#898781">10월</text>
+<text x="876.0" y="222" text-anchor="middle" font-size="10.5" fill="#898781">12월</text>
+<circle cx="56.0" cy="180.8" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="56.0" y="168.8" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">13K</text>
+<circle cx="876.0" cy="37.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="876.0" y="25.2" text-anchor="end" font-size="12" font-weight="600" fill="#0b0b0b">56K</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">특이사항</div>
+    <div class="card">
+      <ul class="insight-list">
+        <li class="insight-item"><span class="insight-dot"></span>광양 4구역이 가동률 91.8%로 가장 높고, 3구역(87.0%)이 상대적으로 여유 있는 구조다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>탱크 운영이 용도별로 고정되어 있다 — 5번 탱크는 전 구역·전월에 걸쳐 벙커링 전용, 6번 탱크는 반출입 전용으로 운영된다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>반출입 물량은 1월 13,101톤에서 12월 56,013톤으로 연중 4.3배 증가해, 4개 지표 중 가장 가파른 성장세를 보였다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 발전소별 ============ -->
+<section class="view" id="view-powerplant">
+  <div class="eyebrow">POWER PLANTS · 2026</div>
+  <h1 class="title">발전소별 월간운영 대시보드</h1>
+  <p class="subtitle">2026년 1~12월, 32개 발전소 · 5개 사업유형(LNG · 부생가스 · 재생 · 수소혼소 · ESS) 기준</p>
+
+  <div style="height: 26px;"></div>
+
+  <div class="kpi-row">
+    <div class="kpi-tile"><div class="kpi-label">총 설비용량</div><div class="kpi-value">10,616MW</div></div>
+    <div class="kpi-tile"><div class="kpi-label">연간 발전량</div><div class="kpi-value">69.3TWh</div></div>
+    <div class="kpi-tile"><div class="kpi-label">평균 가동률</div><div class="kpi-value">62.8%</div></div>
+    <div class="kpi-tile"><div class="kpi-label">연간 온실가스</div><div class="kpi-value">2,374만tCO₂</div></div>
+  </div>
+
+  <div class="section">
+    <div class="grid-2">
+      <div>
+        <div class="section-title">사업유형별 평균 가동률</div>
+        <div class="section-sub">5개 유형 비교, %</div>
+        <div class="card">
+<svg viewBox="0 0 620 182" width="100%" height="182" role="img" aria-label="사업유형별 평균 가동률">
+<text x="98" y="15.0" text-anchor="end" font-size="13" fill="#52514e">부생가스</text>
+<rect x="110" y="0" width="367.1" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="487.1" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">87.4%</text>
+<text x="98" y="53.0" text-anchor="end" font-size="13" fill="#52514e">LNG</text>
+<rect x="110" y="38" width="352.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="472.0" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">83.8%</text>
+<text x="98" y="91.0" text-anchor="end" font-size="13" fill="#52514e">수소혼소</text>
+<rect x="110" y="76" width="321.7" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="441.7" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">76.6%</text>
+<text x="98" y="129.0" text-anchor="end" font-size="13" fill="#52514e">ESS</text>
+<rect x="110" y="114" width="173.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="293.0" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">41.2%</text>
+<text x="98" y="167.0" text-anchor="end" font-size="13" fill="#52514e">재생</text>
+<rect x="110" y="152" width="105.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="225.0" y="167.0" font-size="13" font-weight="600" fill="#0b0b0b">25.0%</text>
+</svg>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">사업유형별 설비용량</div>
+        <div class="section-sub">5개 유형 비교, MW</div>
+        <div class="card">
+<svg viewBox="0 0 620 182" width="100%" height="182" role="img" aria-label="사업유형별 설비용량">
+<text x="98" y="15.0" text-anchor="end" font-size="13" fill="#52514e">LNG</text>
+<rect x="110" y="0" width="420.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="540.0" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">7,552MW</text>
+<text x="98" y="53.0" text-anchor="end" font-size="13" fill="#52514e">재생</text>
+<rect x="110" y="38" width="81.4" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="201.4" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">1,464MW</text>
+<text x="98" y="91.0" text-anchor="end" font-size="13" fill="#52514e">수소혼소</text>
+<rect x="110" y="76" width="51.2" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="171.2" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">920MW</text>
+<text x="98" y="129.0" text-anchor="end" font-size="13" fill="#52514e">부생가스</text>
+<rect x="110" y="114" width="23.4" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="143.4" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">420MW</text>
+<text x="98" y="167.0" text-anchor="end" font-size="13" fill="#52514e">ESS</text>
+<rect x="110" y="152" width="14.5" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="134.5" y="167.0" font-size="13" font-weight="600" fill="#0b0b0b">260MW</text>
+</svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">LNG 월별 가동률 추이</div>
+    <div class="section-sub">LNG 15기 평균, % (전체 발전량의 80%를 차지하는 최대 비중 유형)</div>
+    <div class="card">
+<svg viewBox="0 0 900 230" width="100%" height="230" role="img" aria-label="LNG 월별 가동률 추이">
+<line x1="56" y1="198.0" x2="876" y2="198.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="202.0" text-anchor="end" font-size="11" fill="#898781">56%</text>
+<line x1="56" y1="153.5" x2="876" y2="153.5" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="157.5" text-anchor="end" font-size="11" fill="#898781">69%</text>
+<line x1="56" y1="109.0" x2="876" y2="109.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="113.0" text-anchor="end" font-size="11" fill="#898781">82%</text>
+<line x1="56" y1="64.5" x2="876" y2="64.5" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="68.5" text-anchor="end" font-size="11" fill="#898781">95%</text>
+<line x1="56" y1="20.0" x2="876" y2="20.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="24.0" text-anchor="end" font-size="11" fill="#898781">108%</text>
+<path d="M 56.0,198 L 56.0,83.9 L 130.5,92.9 L 205.1,123.6 L 279.6,164.1 L 354.2,180.8 L 428.7,75.2 L 503.3,47.1 L 577.8,37.2 L 652.4,106.1 L 726.9,151.9 L 801.5,115.0 L 876.0,57.0 L 876.0,198 Z" fill="#2a78d6" opacity="0.10" />
+<path d="M 56.0,83.9 L 130.5,92.9 L 205.1,123.6 L 279.6,164.1 L 354.2,180.8 L 428.7,75.2 L 503.3,47.1 L 577.8,37.2 L 652.4,106.1 L 726.9,151.9 L 801.5,115.0 L 876.0,57.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<text x="56.0" y="222" text-anchor="middle" font-size="10.5" fill="#898781">01월</text>
+<text x="130.5" y="222" text-anchor="middle" font-size="10.5" fill="#898781">02월</text>
+<text x="279.6" y="222" text-anchor="middle" font-size="10.5" fill="#898781">04월</text>
+<text x="428.7" y="222" text-anchor="middle" font-size="10.5" fill="#898781">06월</text>
+<text x="577.8" y="222" text-anchor="middle" font-size="10.5" fill="#898781">08월</text>
+<text x="726.9" y="222" text-anchor="middle" font-size="10.5" fill="#898781">10월</text>
+<text x="876.0" y="222" text-anchor="middle" font-size="10.5" fill="#898781">12월</text>
+<circle cx="56.0" cy="83.9" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="56.0" y="71.9" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">89%</text>
+<circle cx="577.8" cy="37.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="577.8" y="25.2" text-anchor="middle" font-size="12" font-weight="600" fill="#0b0b0b">103%</text>
+<circle cx="876.0" cy="57.0" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="876.0" y="45.0" text-anchor="end" font-size="12" font-weight="600" fill="#0b0b0b">97%</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">특이사항</div>
+    <div class="card">
+      <ul class="insight-list">
+        <li class="insight-item"><span class="insight-dot"></span>부생가스가 가동률 87.4%로 가장 안정적으로 운영되며, 재생에너지는 25.0%로 태양광·풍력의 간헐성이 뚜렷하게 나타난다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>LNG는 설비용량 비중 71%(7,552MW/10,616MW) 대비 발전량 비중이 80%(55.4TWh/69.3TWh)로 더 높다 — 기저부하 이상의 역할을 하고 있다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>LNG 가동률은 8월에 102.7%로 유일하게 100%를 넘는 초과가동 구간에 진입하며, 7월(99.9%)·12월(97.0%)도 100%에 근접한다. 반면 수요가 낮은 4~5월엔 60%대까지 떨어져 계절 진폭이 40%p를 넘는다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>온실가스 배출은 LNG가 2,114만tCO₂로 전체(2,374만tCO₂)의 89%를 차지하며, 재생·ESS는 배출이 0이다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 트레이딩 ============ -->
+<section class="view" id="view-trading">
+  <div class="eyebrow">GLOBAL TRADING · 2026</div>
+  <h1 class="title">글로벌 트레이딩 대시보드</h1>
+  <p class="subtitle">2026년 1~12월, 200건 거래 · 5개 사업부문(철강 · 에너지 · 모빌리티 · 식량 · 바이오) 기준</p>
+
+  <div style="height: 26px;"></div>
+
+  <div class="kpi-row">
+    <div class="kpi-tile"><div class="kpi-label">총 거래건수</div><div class="kpi-value">200건</div></div>
+    <div class="kpi-tile"><div class="kpi-label">총 거래액</div><div class="kpi-value">$3.40B</div></div>
+    <div class="kpi-tile"><div class="kpi-label">평균 이익률</div><div class="kpi-value">5.51%</div></div>
+  </div>
+
+  <div class="section">
+    <div class="grid-2">
+      <div>
+        <div class="section-title">사업부문별 거래액</div>
+        <div class="section-sub">5개 부문 비교, USD</div>
+        <div class="card">
+<svg viewBox="0 0 620 182" width="100%" height="182" role="img" aria-label="사업부문별 거래액">
+<text x="88" y="15.0" text-anchor="end" font-size="13" fill="#52514e">에너지</text>
+<rect x="100" y="0" width="430.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="540.0" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">$2.34B</text>
+<text x="88" y="53.0" text-anchor="end" font-size="13" fill="#52514e">모빌리티</text>
+<rect x="100" y="38" width="92.5" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="202.5" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">$504.0M</text>
+<text x="88" y="91.0" text-anchor="end" font-size="13" fill="#52514e">철강</text>
+<rect x="100" y="76" width="54.6" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="164.6" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">$297.6M</text>
+<text x="88" y="129.0" text-anchor="end" font-size="13" fill="#52514e">식량</text>
+<rect x="100" y="114" width="31.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="141.0" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">$169.1M</text>
+<text x="88" y="167.0" text-anchor="end" font-size="13" fill="#52514e">바이오</text>
+<rect x="100" y="152" width="15.9" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="125.9" y="167.0" font-size="13" font-weight="600" fill="#0b0b0b">$86.6M</text>
+</svg>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">사업부문별 평균 이익률</div>
+        <div class="section-sub">5개 부문 비교, %</div>
+        <div class="card">
+<svg viewBox="0 0 620 182" width="100%" height="182" role="img" aria-label="사업부문별 평균 이익률">
+<text x="88" y="15.0" text-anchor="end" font-size="13" fill="#52514e">모빌리티</text>
+<rect x="100" y="0" width="390.9" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="500.9" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">10.9%</text>
+<text x="88" y="53.0" text-anchor="end" font-size="13" fill="#52514e">철강</text>
+<rect x="100" y="38" width="224.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="334.0" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">6.3%</text>
+<text x="88" y="91.0" text-anchor="end" font-size="13" fill="#52514e">바이오</text>
+<rect x="100" y="76" width="156.2" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="266.2" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">4.4%</text>
+<text x="88" y="129.0" text-anchor="end" font-size="13" fill="#52514e">식량</text>
+<rect x="100" y="114" width="140.1" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="250.1" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">3.9%</text>
+<text x="88" y="167.0" text-anchor="end" font-size="13" fill="#52514e">에너지</text>
+<rect x="100" y="152" width="76.7" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="186.7" y="167.0" font-size="13" font-weight="600" fill="#0b0b0b">2.1%</text>
+</svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">월별 거래액 추이</div>
+    <div class="section-sub">전체 부문 합산, USD</div>
+    <div class="card">
+<svg viewBox="0 0 900 230" width="100%" height="230" role="img" aria-label="월별 거래액 추이">
+<line x1="56" y1="198.0" x2="876" y2="198.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="202.0" text-anchor="end" font-size="11" fill="#898781">26.7M</text>
+<line x1="56" y1="153.5" x2="876" y2="153.5" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="157.5" text-anchor="end" font-size="11" fill="#898781">184.4M</text>
+<line x1="56" y1="109.0" x2="876" y2="109.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="113.0" text-anchor="end" font-size="11" fill="#898781">342.2M</text>
+<line x1="56" y1="64.5" x2="876" y2="64.5" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="68.5" text-anchor="end" font-size="11" fill="#898781">499.9M</text>
+<line x1="56" y1="20.0" x2="876" y2="20.0" stroke="#e1e0d9" stroke-width="1" />
+<text x="48" y="24.0" text-anchor="end" font-size="11" fill="#898781">657.7M</text>
+<path d="M 56.0,198 L 56.0,180.3 L 130.5,177.5 L 205.1,151.1 L 279.6,37.2 L 354.2,117.9 L 428.7,164.2 L 503.3,91.9 L 577.8,84.1 L 652.4,114.9 L 726.9,180.8 L 801.5,43.9 L 876.0,163.6 L 876.0,198 Z" fill="#2a78d6" opacity="0.10" />
+<path d="M 56.0,180.3 L 130.5,177.5 L 205.1,151.1 L 279.6,37.2 L 354.2,117.9 L 428.7,164.2 L 503.3,91.9 L 577.8,84.1 L 652.4,114.9 L 726.9,180.8 L 801.5,43.9 L 876.0,163.6" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+<text x="56.0" y="222" text-anchor="middle" font-size="10.5" fill="#898781">01월</text>
+<text x="130.5" y="222" text-anchor="middle" font-size="10.5" fill="#898781">02월</text>
+<text x="279.6" y="222" text-anchor="middle" font-size="10.5" fill="#898781">04월</text>
+<text x="428.7" y="222" text-anchor="middle" font-size="10.5" fill="#898781">06월</text>
+<text x="577.8" y="222" text-anchor="middle" font-size="10.5" fill="#898781">08월</text>
+<text x="726.9" y="222" text-anchor="middle" font-size="10.5" fill="#898781">10월</text>
+<text x="876.0" y="222" text-anchor="middle" font-size="10.5" fill="#898781">12월</text>
+<circle cx="56.0" cy="180.3" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="56.0" y="168.3" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">$89.5M</text>
+<circle cx="279.6" cy="37.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="279.6" y="25.2" text-anchor="middle" font-size="12" font-weight="600" fill="#0b0b0b">$596.6M</text>
+<circle cx="876.0" cy="163.6" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2" />
+<text x="876.0" y="151.6" text-anchor="end" font-size="12" font-weight="600" fill="#0b0b0b">$148.7M</text>
+</svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">특이사항</div>
+    <div class="card">
+      <ul class="insight-list">
+        <li class="insight-item"><span class="insight-dot"></span>에너지 부문은 거래건수가 50건(25%)에 불과하지만 거래액은 $2.34B로 전체의 68.9%를 차지한다 — 건당 거래 규모가 압도적으로 크다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>이익률은 모빌리티가 10.9%로 가장 높고 에너지가 2.1%로 가장 낮다 — 거래 규모와 수익성이 반비례하는 구조다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>월별 거래액은 4월($596.6M)과 11월($573.0M)에 급증했는데, 두 달 모두 에너지 부문이 각각 81%·89%를 차지해 월별 변동성을 주도했다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 해외법인 ============ -->
+<section class="view" id="view-subsidiaries">
+  <div class="eyebrow">OVERSEAS SUBSIDIARIES · 2026</div>
+  <h1 class="title">해외법인 분기실적 대시보드</h1>
+  <p class="subtitle">2026년 연간 누계, 120개 법인 · 7개 권역(아시아 · 유럽 · 북미 · 중남미 · 중동 · 대양주 · 아프리카) 기준</p>
+
+  <div style="height: 26px;"></div>
+
+  <div class="kpi-row">
+    <div class="kpi-tile"><div class="kpi-label">법인 수</div><div class="kpi-value">120개</div></div>
+    <div class="kpi-tile"><div class="kpi-label">연매출</div><div class="kpi-value">18.19조원</div></div>
+    <div class="kpi-tile"><div class="kpi-label">연영업이익</div><div class="kpi-value">9,330억원</div></div>
+    <div class="kpi-tile"><div class="kpi-label">영업이익률</div><div class="kpi-value">5.13%</div></div>
+  </div>
+
+  <div class="section">
+    <div class="grid-2">
+      <div>
+        <div class="section-title">권역별 연매출</div>
+        <div class="section-sub">7개 권역 비교, 조원</div>
+        <div class="card">
+<svg viewBox="0 0 620 258" width="100%" height="258" role="img" aria-label="권역별 연매출">
+<text x="78" y="15.0" text-anchor="end" font-size="13" fill="#52514e">아시아</text>
+<rect x="90" y="0" width="440.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="540.0" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">7.14조원</text>
+<text x="78" y="53.0" text-anchor="end" font-size="13" fill="#52514e">유럽</text>
+<rect x="90" y="38" width="228.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="328.0" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">3.70조원</text>
+<text x="78" y="91.0" text-anchor="end" font-size="13" fill="#52514e">중남미</text>
+<rect x="90" y="76" width="156.6" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="256.6" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">2.54조원</text>
+<text x="78" y="129.0" text-anchor="end" font-size="13" fill="#52514e">중동</text>
+<rect x="90" y="114" width="89.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="189.0" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">1.44조원</text>
+<text x="78" y="167.0" text-anchor="end" font-size="13" fill="#52514e">북미</text>
+<rect x="90" y="152" width="78.8" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="178.8" y="167.0" font-size="13" font-weight="600" fill="#0b0b0b">1.28조원</text>
+<text x="78" y="205.0" text-anchor="end" font-size="13" fill="#52514e">아프리카</text>
+<rect x="90" y="190" width="65.8" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="165.8" y="205.0" font-size="13" font-weight="600" fill="#0b0b0b">1.07조원</text>
+<text x="78" y="243.0" text-anchor="end" font-size="13" fill="#52514e">대양주</text>
+<rect x="90" y="228" width="63.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="163.0" y="243.0" font-size="13" font-weight="600" fill="#0b0b0b">1.02조원</text>
+</svg>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">권역별 영업이익률</div>
+        <div class="section-sub">7개 권역 비교, %</div>
+        <div class="card">
+<svg viewBox="0 0 620 258" width="100%" height="258" role="img" aria-label="권역별 영업이익률">
+<text x="78" y="15.0" text-anchor="end" font-size="13" fill="#52514e">아프리카</text>
+<rect x="90" y="0" width="402.9" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="502.9" y="15.0" font-size="13" font-weight="600" fill="#0b0b0b">6.41%</text>
+<text x="78" y="53.0" text-anchor="end" font-size="13" fill="#52514e">대양주</text>
+<rect x="90" y="38" width="397.3" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="497.3" y="53.0" font-size="13" font-weight="600" fill="#0b0b0b">6.32%</text>
+<text x="78" y="91.0" text-anchor="end" font-size="13" fill="#52514e">북미</text>
+<rect x="90" y="76" width="379.7" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="479.7" y="91.0" font-size="13" font-weight="600" fill="#0b0b0b">6.04%</text>
+<text x="78" y="129.0" text-anchor="end" font-size="13" fill="#52514e">아시아</text>
+<rect x="90" y="114" width="320.6" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="420.6" y="129.0" font-size="13" font-weight="600" fill="#0b0b0b">5.10%</text>
+<text x="78" y="167.0" text-anchor="end" font-size="13" fill="#52514e">중남미</text>
+<rect x="90" y="152" width="301.1" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="401.1" y="167.0" font-size="13" font-weight="600" fill="#0b0b0b">4.79%</text>
+<text x="78" y="205.0" text-anchor="end" font-size="13" fill="#52514e">유럽</text>
+<rect x="90" y="190" width="299.8" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="399.8" y="205.0" font-size="13" font-weight="600" fill="#0b0b0b">4.77%</text>
+<text x="78" y="243.0" text-anchor="end" font-size="13" fill="#52514e">중동</text>
+<rect x="90" y="228" width="264.0" height="22" rx="4" ry="4" fill="#2a78d6" />
+<text x="364.0" y="243.0" font-size="13" font-weight="600" fill="#0b0b0b">4.20%</text>
+</svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">연매출 상위 5개 법인</div>
+    <div class="section-sub">120개 법인 중, 백만원</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>법인명</th><th>권역</th><th style="text-align:right">연매출</th><th style="text-align:right">연영업이익</th></tr></thead>
+        <tbody>
+          <tr><td>POSCO INTL SINGAPORE PTE</td><td>아시아</td><td class="num">390,230</td><td class="num">24,878</td></tr>
+          <tr><td>POSCO INTL SOUTH AFRICA</td><td>아프리카</td><td class="num">380,137</td><td class="num">25,861</td></tr>
+          <tr><td>POSCO INTL TURKEY</td><td>유럽</td><td class="num">377,989</td><td class="num">27,900</td></tr>
+          <tr><td>POSCO INTL UK LTD</td><td>유럽</td><td class="num">368,741</td><td class="num">23,868</td></tr>
+          <tr><td>SENEX HOLDINGS PTY LTD</td><td>대양주</td><td class="num">368,176</td><td class="num">32,698</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">특이사항</div>
+    <div class="card">
+      <ul class="insight-list">
+        <li class="insight-item"><span class="insight-dot"></span>아시아 권역이 법인 43개·매출 7.14조원으로 전체의 36%·39%를 차지하는 압도적 비중이다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>영업이익률은 아프리카(6.41%)·대양주(6.32%)가 가장 높고 중동(4.20%)이 가장 낮다 — 법인 수·매출 규모와 수익성이 비례하지 않는다.</li>
+        <li class="insight-item"><span class="insight-dot"></span>매출 상위 5개 법인 중 4개가 아시아 최대 권역이 아닌 아프리카·유럽·대양주 소속으로, 매출 상위권이 권역 규모와 별개로 분산돼 있다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  var tabs = document.querySelectorAll('.tab-btn');
+  var views = document.querySelectorAll('.view');
+  function activate(name) {
+    tabs.forEach(function (t) { t.classList.toggle('active', t.dataset.view === name); });
+    views.forEach(function (v) { v.classList.toggle('active', v.id === 'view-' + name); });
+    window.scrollTo(0, 0);
+    try { location.hash = name; } catch (e) {}
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () { activate(t.dataset.view); });
+  });
+  var initial = (location.hash || '').replace('#', '');
+  var valid = ['overview', 'terminal', 'powerplant', 'trading', 'subsidiaries'];
+  if (valid.indexOf(initial) !== -1) activate(initial);
+</script>
+</body>
+</html>
